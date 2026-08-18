@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>臨床證照需求儀表板</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --ink:#14252b;
+  --bg:#fbe9e9;
+  --panel:#ffffff;
+  --line:#f0d3d3;
+  --teal:#125b57;
+  --teal-deep:#0b3d3a;
+  --amber:#c97c2e;
+  --muted:#5c6d6a;
+
+  --c-acls:#1f6f9e;   /* blue */
+  --c-bls:#3a8a63;    /* green */
+  --c-anls:#7a4fa3;   /* purple */
+  --c-als:#1f9e8e;    /* teal-cyan */
+  --c-nihss:#c9722e;  /* burnt orange */
+  --c-cde:#b0475f;    /* rose */
+  --c-other:#5c6d6a;  /* grey */
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Zen Kaku Gothic New', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  padding:28px 18px 60px;
+}
+
+.wrap{max-width:1080px;margin:0 auto;}
+
+/* ---------- Header ---------- */
+.masthead{
+  border:1px solid var(--line);
+  background:var(--panel);
+  border-radius:14px;
+  padding:26px 28px;
+  margin-bottom:18px;
+  position:relative;
+  overflow:hidden;
+}
+.masthead::before{
+  content:"";
+  position:absolute; top:0; left:0; bottom:0; width:6px;
+  background:linear-gradient(180deg,var(--teal),var(--als, #1f9e8e));
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--teal); font-weight:600; margin-bottom:8px;
+}
+h1{
+  font-size:30px; font-weight:900; margin:0 0 6px; letter-spacing:.01em;
+  color:var(--teal-deep);
+}
+.sub{color:var(--muted); font-size:15px; line-height:1.7; margin:0;}
+.share-note{
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:12px; padding:6px 12px; border-radius:20px;
+  background:#eaf3f1; border:1px solid #cfe3df; color:var(--teal-deep);
+  font-size:13px; font-weight:600;
+}
+.share-note svg{width:13px;height:13px;flex:none;}
+
+/* ---------- Tabs ---------- */
+.tabbar{
+  display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;
+}
+.tab{
+  font-family:'IBM Plex Mono',monospace;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--muted);
+  padding:10px 18px;
+  border-radius:10px;
+  font-size:14.5px; font-weight:600; letter-spacing:.02em;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.tab:hover{border-color:var(--teal);}
+.tab.active{
+  background:var(--teal-deep); color:#fff; border-color:var(--teal-deep);
+}
+
+/* ---------- Search ---------- */
+.searchbar{
+  display:flex; align-items:center; gap:10px;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; padding:10px 14px; margin-bottom:18px;
+}
+.searchbar svg{width:16px;height:16px;color:var(--muted);flex:none;}
+.searchbar input{
+  border:none; outline:none; flex:1; font-size:16px;
+  font-family:inherit; background:transparent; color:var(--ink);
+}
+.searchbar input::placeholder{color:#9aa8a5;}
+
+/* ---------- Legend ---------- */
+.legend{
+  display:flex; flex-wrap:wrap; gap:8px 14px;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; padding:12px 16px; margin-bottom:20px;
+  font-size:13px;
+}
+.legend-item{display:flex; align-items:center; gap:6px; color:var(--muted); font-weight:500;}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+/* ---------- Cards ---------- */
+.section-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--teal); font-weight:600; margin:26px 0 10px 2px;
+}
+.card{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:12px; margin-bottom:14px; overflow:hidden;
+}
+.card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; cursor:pointer; user-select:none;
+  gap:12px;
+}
+.card-head:hover{background:#f6f9f8;}
+.card-title{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+.card-title .name{font-size:19px; font-weight:700; color:var(--teal-deep);}
+.card-title .count{
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--muted);
+  background:#eef2f1; padding:2px 9px; border-radius:20px; font-weight:600;
+}
+.chev{
+  width:18px;height:18px;color:var(--muted); flex:none;
+  transition:transform .18s ease;
+}
+.card.open .chev{transform:rotate(180deg);}
+.card-body{
+  max-height:0; overflow:hidden; transition:max-height .25s ease;
+}
+.card.open .card-body{max-height:3000px;}
+.card-body-inner{padding:0 20px 18px;}
+
+.row{
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:16px; padding:12px 0; border-top:1px solid var(--line);
+}
+.row:first-child{border-top:1px solid var(--line);}
+.row .who{
+  font-weight:700; font-size:16px; min-width:190px; color:var(--ink);
+  flex:none;
+}
+.row .who .tag{
+  display:block; font-family:'IBM Plex Mono',monospace; font-weight:500;
+  font-size:11.5px; color:var(--muted); margin-top:2px;
+}
+.certs{display:flex; flex-wrap:wrap; gap:6px; flex:1;}
+
+.badge{
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:13.5px; font-weight:600; line-height:1.4;
+  padding:5px 10px; border-radius:7px;
+  border:1px solid transparent;
+  white-space:normal;
+}
+.badge .kw{
+  font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12px;
+}
+
+.none-card{
+  background:var(--panel); border:1px dashed var(--line);
+  border-radius:12px; padding:16px 20px; color:var(--muted); font-size:15px;
+}
+.none-list{
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+}
+.none-pill{
+  background:#f3f5f4; border:1px solid var(--line); border-radius:20px;
+  padding:5px 12px; font-size:14px; color:var(--ink); font-weight:600;
+}
+
+.empty{
+  text-align:center; padding:40px 20px; color:var(--muted); font-size:15px;
+}
+
+footer{
+  text-align:center; color:var(--muted); font-size:12.5px; margin-top:34px;
+  font-family:'IBM Plex Mono',monospace;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Clinical Credential Registry</div>
+    <h1>疾病照護團隊 · 證照需求儀表板</h1>
+    <p class="sub">彙整各疾病照護團隊職類所需之急救／專科證照規定，支援「依疾病查詢」與「依職類查詢」兩種檢視方式。</p>
+    <div class="share-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      此頁面內容為共用參考資料，團隊成員皆可檢視
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab active" data-view="disease">依疾病查詢</button>
+    <button class="tab" data-view="role">依職類查詢</button>
+  </div>
+
+  <div class="searchbar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="searchInput" type="text" placeholder="搜尋疾病、職類或證照關鍵字（例如：ACLS、護理師、腦中風）..."/>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div id="content"></div>
+
+  <footer>資料彙整自各疾病照護認證規範條文 · 最後更新 2026/07</footer>
+</div>
+
+<script>
+const KEYWORD_COLORS = [
+  ['ACLS', '#1f6f9e'],
+  ['ANLS', '#7a4fa3'],
+  ['ALS',  '#1f9e8e'],
+  ['BLS',  '#3a8a63'],
+  ['NIHSS','#c9722e'],
+  ['CDE',  '#b0475f'],
+  ['共同照護網', '#b0475f'],
+];
+const OTHER_COLOR = '#5c6d6a';
+
+function containsKeyword(s){
+  return KEYWORD_COLORS.some(([kw])=> s.toUpperCase().includes(kw.toUpperCase()));
+}
+
+// Split a cert string into individually-colorable pieces, without breaking
+// apart parenthetical explanations or purely descriptive trailing text.
+function splitRespectingParens(text, sepChars){
+  const sepSet = new Set(sepChars);
+  let depth=0, buf='', parts=[];
+  for(const ch of text){
+    if(ch==='('||ch==='（') depth++;
+    if(ch===')'||ch==='）') depth--;
+    if(depth<=0 && sepSet.has(ch)){
+      parts.push(buf); buf='';
+    } else {
+      buf+=ch;
+    }
+  }
+  parts.push(buf);
+  return parts;
+}
+function cleanPiece(s){
+  return s.replace(/^[，,、；;\s]+|[，,、；;\s]+$/g,'');
+}
+
+function splitCertText(text){
+  // Primary separators: distinct certificates joined by / ／ 、 ； ; 或
+  let segments = splitRespectingParens(text, ['、','/','／','；',';','或'])
+    .map(cleanPiece).filter(Boolean);
+
+  // Secondary pass: split on commas, but only when it actually separates
+  // two distinct certificate clauses (both sides contain a keyword) —
+  // otherwise a comma is just part of a descriptive note and stays put.
+  let result = [];
+  segments.forEach(seg=>{
+    const commaParts = splitRespectingParens(seg, ['，',',']).map(cleanPiece).filter(Boolean);
+    if(commaParts.length>1 && commaParts.every(containsKeyword)){
+      result.push(...commaParts);
+    } else {
+      result.push(seg);
+    }
+  });
+  return result.length ? result : [text];
+}
+
+function findKeywordMatch(text){
+  const upper = text.toUpperCase();
+  let best = null;
+  for(const [kw,color] of KEYWORD_COLORS){
+    const idx = upper.indexOf(kw.toUpperCase());
+    if(idx!==-1 && (best===null || idx<best.idx)){
+      best = {kw,color,idx,len:kw.length};
+    }
+  }
+  return best;
+}
+
+const CERT_COLOR_OVERRIDES = {
+  'ANLS/ACLS': '#750000',
+  'ANLS／ACLS': '#750000',
+  'BLS/ANLS/ACLS': '#484891',
+  'BLS／ANLS／ACLS': '#484891',
+  'ANLS/BLS': '#642100',
+  'ANLS／BLS': '#642100',
+};
+
+function renderPill(item){
+  const text = certText(item);
+  const overrideColor = (typeof item === 'object' && item.color) ? item.color : (CERT_COLOR_OVERRIDES[text] || null);
+  const m = findKeywordMatch(text);
+  const color = overrideColor || (m ? m.color : OTHER_COLOR);
+  if(!m){
+    return `<span class="badge" style="background:${color}18;border-color:${color}55;color:${color}">${text}</span>`;
+  }
+  const before = text.slice(0,m.idx);
+  const matched = text.slice(m.idx, m.idx+m.len);
+  const after = text.slice(m.idx+m.len);
+  return `<span class="badge" style="background:${color}18;border-color:${color}55;color:${color}">${before}<span class="kw">${matched}</span>${after}</span>`;
+}
+
+
+const DISEASES = [
+  { id:'kidney', name:'腎臟病', roles:[
+    { role:'腎臟專科醫師', certs:['需具備有效期內 ACLS 或 ALS 證書，達 80%'] },
+    { role:'護理師', certs:[{ text:'ACLS 或 ALS 達 50%（執行 HD 及 PD 之護理師，具效期內證書人數總和達 50%）', color:'#0066CC' }] },
+  ]},
+  { id:'diabetes', name:'糖尿病', roles:[
+    { role:'內分泌暨新陳代謝科專科醫師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得糖尿病照護共同照護網認證證書'] },
+    { role:'腎臟專科醫師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得糖尿病照護共同照護網認證證書'] },
+    { role:'心臟內科專科醫師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得糖尿病照護共同照護網認證證書'] },
+    { role:'護理師／衛教師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得糖尿病照護共同照護網認證證書'] },
+    { role:'營養師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得糖尿病照護共同照護網認證證書'] },
+    { role:'藥師', certs:['具合格糖尿病衛教人員（CDE）證照，或取得縣市糖尿病共同照護網認證證書'] },
+  ]},
+  { id:'stroke', name:'腦中風', roles:[
+    { role:'神經內科專科醫師', certs:['ANLS','NIHSS'] },
+    { role:'神經外科專科醫師', certs:['ANLS','NIHSS'] },
+    { role:'急診醫學科專科醫師', certs:['ANLS/ACLS','NIHSS'] },
+    { role:'專科護理師', certs:['ANLS','NIHSS'] },
+    { role:'放射診斷科專科醫師', certs:['ANLS／ACLS','NIHSS'] },
+    { role:'復健科專科醫師', certs:['ANLS／ACLS','NIHSS'] },
+    { role:'護理師', certs:['BLS／ANLS／ACLS','NIHSS','急診、加護病房護理師需ACLS'] },
+    { role:'個案管理師', certs:['ANLS/BLS','NIHSS'] },
+    { role:'藥師', certs:['BLS'] },
+    { role:'復健師', certs:['ANLS／BLS','NIHSS'] },
+    { role:'呼吸治療師', certs:['ANLS／BLS','NIHSS'] },
+    { role:'放射師', certs:['BLS'] },
+    { role:'營養師', certs:['BLS'] },
+    { role:'社會工作師', certs:['BLS'] },
+    { role:'心理師', certs:['BLS'] },
+  ]},
+  { id:'tbi', name:'創傷性腦損傷（TBI）', roles:[
+    { role:'急診醫學科專科醫師', certs:['ANLS/ACLS'] },
+    { role:'外傷醫學科專科醫師', certs:['ANLS/ACLS'] },
+    { role:'神經外科專科醫師', certs:['ANLS/ACLS'] },
+    { role:'復健科專科醫師', certs:['ANLS/ACLS'] },
+    { role:'加護病房醫師', certs:['ANLS/ACLS'] },
+    { role:'護理師', certs:['BLS/ANLS/ACLS'] },
+    { role:'個案管理師', certs:['ANLS/BLS'] },
+    { role:'專科護理師', certs:['ANLS'] },
+    { role:'呼吸治療師', certs:['ANLS/BLS'] },
+    { role:'心理師', certs:['BLS'] },
+    { role:'社會工作師', certs:['BLS'] },
+    { role:'藥師', certs:['BLS'] },
+    { role:'復健師', certs:['ANLS/BLS'] },
+  ]},
+  { id:'copd', name:'慢性阻塞性肺病（COPD）', roles:[
+    { role:'胸腔科醫師', certs:['ACLS'] },
+    { role:'呼吸治療師', certs:['ACLS'] },
+    { role:'護理師', certs:['ICU 護理師須具 ACLS；一般病房護理師須具有效期內 BLS'] },
+    { role:'社會工作師', certs:['BLS'] },
+    { role:'藥師', certs:['BLS'] },
+    { role:'營養師', certs:['BLS'] },
+    { role:'個案管理師', certs:['BLS'] },
+  ]},
+  { id:'ami', name:'急性心肌梗塞（AMI）', roles:[
+    { role:'心臟內科專科醫師', certs:['ACLS'] },
+    { role:'心臟外科專科醫師', certs:['ACLS'] },
+    { role:'麻醉科專科醫師', certs:['ACLS'] },
+    { role:'核子醫學科專科醫師', certs:['ACLS'] },
+    { role:'護理師', certs:['團隊護理師具 ACLS 達 40%'] },
+    { role:'心導管室技術員', certs:['ACLS'] },
+    { role:'ECMO 體外循環師', certs:['ACLS'] },
+    { role:'心電圖技術員', certs:['BLS'] },
+    { role:'核子醫學檢查技術員', certs:['BLS'] },
+    { role:'超音波技術員', certs:['BLS'] },
+    { role:'復健科專科醫師', certs:['ACLS'] },
+    { role:'心內外復健治療師', certs:['至少 1 人具 ACLS，其餘具 BLS'] },
+    { role:'呼吸治療師', certs:['ACLS'] },
+    { role:'營養師', certs:['BLS'] },
+    { role:'藥師', certs:['BLS'] },
+  ]},
+];
+
+const NO_REQUIREMENT = ['關節置換','乳癌','小兒髖關節發育不良照護','肺癌','結直腸癌'];
+
+// ---- Build role index (aggregate across diseases) ----
+const ROLE_MAP = {};
+DISEASES.forEach(d=>{
+  d.roles.forEach(r=>{
+    if(!ROLE_MAP[r.role]) ROLE_MAP[r.role] = [];
+    ROLE_MAP[r.role].push({ disease:d.name, diseaseId:d.id, certs:r.certs });
+  });
+});
+
+let currentView = 'disease';
+let openCards = new Set();
+
+function renderLegend(){
+  const el = document.getElementById('legend');
+  el.innerHTML = KEYWORD_COLORS
+    .filter((v,i,arr)=>arr.findIndex(x=>x[0]===v[0])===i)
+    .map(([kw,color])=>`<div class="legend-item"><span class="dot" style="background:${color}"></span>${kw}</div>`)
+    .join('') + `<div class="legend-item"><span class="dot" style="background:var(--c-other)"></span>其他規定</div>`;
+}
+
+function certBadges(certs){
+  return certs.map(renderPill).join('');
+}
+
+function certText(c){
+  return typeof c === 'string' ? c : c.text;
+}
+function matchesQuery(text, q){
+  return text.toLowerCase().includes(q);
+}
+
+function renderDiseaseView(query){
+  const q = query.trim().toLowerCase();
+  let html = '';
+  let anyShown = false;
+
+  DISEASES.forEach(d=>{
+    const filteredRoles = d.roles.filter(r=>{
+      if(!q) return true;
+      if(matchesQuery(d.name,q) || matchesQuery(r.role,q)) return true;
+      return r.certs.some(c=>matchesQuery(certText(c),q));
+    });
+    if(q && filteredRoles.length===0 && !matchesQuery(d.name,q)) return;
+    const rolesToShow = q ? filteredRoles : d.roles;
+    if(rolesToShow.length===0) return;
+    anyShown = true;
+
+    const isOpen = openCards.has('d-'+d.id) || !!q;
+    html += `
+    <div class="card ${isOpen?'open':''}" data-card="d-${d.id}">
+      <div class="card-head" onclick="toggleCard('d-${d.id}')">
+        <div class="card-title">
+          <span class="name">${d.name}</span>
+          <span class="count">${rolesToShow.length} 職類</span>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          ${rolesToShow.map(r=>`
+            <div class="row">
+              <div class="who">${r.role}</div>
+              <div class="certs">${certBadges(r.certs)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  const noReqFiltered = NO_REQUIREMENT.filter(n=> !q || matchesQuery(n,q) || matchesQuery('無證書規定',q));
+  if(noReqFiltered.length>0){
+    anyShown = true;
+    html += `
+    <div class="section-title">無證書規定項目</div>
+    <div class="none-card">
+      以下疾病目前無條文規定特定證書要求：
+      <div class="none-list">
+        ${noReqFiltered.map(n=>`<span class="none-pill">${n}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if(!anyShown){
+    html = `<div class="empty">找不到符合「${query}」的結果</div>`;
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderRoleView(query){
+  const q = query.trim().toLowerCase();
+  let html = '';
+  let anyShown = false;
+
+  const roleNames = Object.keys(ROLE_MAP).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+
+  roleNames.forEach(role=>{
+    const entries = ROLE_MAP[role];
+    const filteredEntries = entries.filter(e=>{
+      if(!q) return true;
+      if(matchesQuery(role,q) || matchesQuery(e.disease,q)) return true;
+      return e.certs.some(c=>matchesQuery(certText(c),q));
+    });
+    if(q && filteredEntries.length===0 && !matchesQuery(role,q)) return;
+    const entriesToShow = q ? filteredEntries : entries;
+    if(entriesToShow.length===0) return;
+    anyShown = true;
+
+    // unique cert keywords required across all diseases for this role
+    const allKw = new Set();
+    entries.forEach(e=> e.certs.forEach(c=>{
+      const text = certText(c);
+      const m = findKeywordMatch(text);
+      allKw.add(m ? m.kw : text);
+    }));
+
+    const cardId = 'r-'+role.replace(/[^\w\u4e00-\u9fff]/g,'');
+    const isOpen = openCards.has(cardId) || !!q;
+
+    html += `
+    <div class="card ${isOpen?'open':''}" data-card="${cardId}">
+      <div class="card-head" onclick="toggleCard('${cardId}')">
+        <div class="card-title">
+          <span class="name">${role}</span>
+          <span class="count">涉及 ${entriesToShow.length} 項疾病 · 共需 ${allKw.size} 種證照</span>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          ${entriesToShow.map(e=>`
+            <div class="row">
+              <div class="who">${e.disease}<span class="tag">DISEASE</span></div>
+              <div class="certs">${certBadges(e.certs)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  if(!anyShown){
+    html = `<div class="empty">找不到符合「${query}」的結果</div>`;
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function toggleCard(id){
+  if(openCards.has(id)) openCards.delete(id);
+  else openCards.add(id);
+  render();
+}
+
+function render(){
+  const q = document.getElementById('searchInput').value;
+  if(currentView==='disease') renderDiseaseView(q);
+  else renderRoleView(q);
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.dataset.view;
+    openCards = new Set();
+    render();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', render);
+
+renderLegend();
+render();
+</script>
+</body>
+</html>
